@@ -5,114 +5,128 @@ import math
 
 rand = random.Random()
 BLACK = (0,0,0)
-BLUE = (0,0,255)
+BLUE = (20,40,250)
 RED = (255, 0, 0)
-YELLOW = (255, 255, 0)
+YELLOW = (250, 248, 57)
+WHITE = (255,255,255)
 
 class Board():
 
-
     def __init__(self):
-        # const
+        # board constant
         self.rows = 6
         self.cols = 7
-        #logic
-        self.board = np.zeros((self.rows, self.cols)) #sets inital 2d array filled with zeros
-        # graphics
-        self.size = 100
-        self.radius = (int)(self.size/3)
+        self.board = np.zeros((self.rows, self.cols))  # sets inital 2d array filled with zeros
+        # logic
         self.player = 1
         self.winner = 0
+        self.p1Score = 0
+        self.p2Score = 0
+        # graphics
+        self.size = 75
+        self.radius = (int)(self.size * .38)
 
-    def __str__(self):
-        str_board = "\n\n" + str(self.board).replace("0.", "_").replace("-1.", " O").replace("1.", "X")
-        str_board = str_board.replace("[", " ").replace("]", " ")
-        return str_board
+
+
     # --- graphics ---
     def drawBoard(self, win):
+        offset = 40
         for c in range(self.cols):
             for r in range(self.rows):
-                rect = (c * self.size, (r + 1) * self.size, self.size, self.size)
-                pygame.draw.rect(win, BLUE, rect)
-                circle = (int((c + 0.5) * self.size), int((r + 1.5) * self.size))
-                pygame.draw.circle(win, BLACK, circle, self.radius)
-
-        for c in range(self.cols):
-            for r in range(self.rows):
+                rect = (offset+c * self.size, (r + 1) * self.size-offset, self.size, self.size)
+                pygame.draw.rect(win, YELLOW, rect)
+                posCircle = (offset+int((c + 0.5) * self.size), int((r + 1.5) * self.size)-offset)
+                # determines color of circle
                 if self.board[r][c] == 1:
-                    circle = (int((c + 0.5) * self.size), int((r + 1.5) * self.size))
-                    pygame.draw.circle(win, RED, circle, self.radius)
+                    color = RED
                 elif self.board[r][c] == 2:
-                    circle = (int((c + 0.5) * self.size), int((r + 1.5) * self.size))
-                    pygame.draw.circle(win, YELLOW, circle, self.radius)
+                    color = BLACK
+                else:
+                    color = WHITE
+                pygame.draw.circle(win, color, posCircle, self.radius)
 
-    def highlight(self, win, event):
-        pygame.draw.rect(win, BLACK, (0, 0, self.width, self.size))
-        mouseX = event.pos[0]  # checks x-position of the mouse on the screen
-        if self.player == 1:
-            pygame.draw.circle(win, RED, (mouseX, int(self.size / 2)), self.radius)
-        else:
-            pygame.draw.circle(win, YELLOW, (mouseX, int(self.size / 2)), self.radius)
+    def drawTexts(self, win):
+        myfont = pygame.font.SysFont('helvetica', 20)
+        redScore = myfont.render("P1: "+str(self.p1Score), False, (0, 0, 0))
+        blackScore = myfont.render("P2: "+str(self.p2Score), False, (0, 0, 0))
+        if self.winner == 1 or self.winner == 2:
+            winFont = pygame.font.SysFont('helvetica', 42)
+            theWinner = winFont.render("Player " + str(self.winner) + " wins!!", False, (0,255,0))
+            win.blit(theWinner, (172,166))
+        win.blit(redScore, (50, 490))
+        win.blit(blackScore, (505, 490))
+
+    def newGameButton(self, win):
+        pygame.draw.rect(win, (40, 250, 40), (250, 520, 106, 30))
+        pygame.draw.rect(win,BLACK,(250,520,106,30),1)
+        myfont = pygame.font.SysFont('helvetica', 18)
+        buttonText = myfont.render("New Game", False, (0, 0, 0))
+        win.blit(buttonText, (259, 526))
+
+
 
 
     # --- logic ---
     def getMoves(self):
         # checks each column for space
         moves = [False, False, False, False, False, False, False]
-        for m in range(self.rows):
+        for m in range(self.cols):
             if self.board[0][m] == 0:
                 moves[m] = True
         return moves
 
     def doMove(self, event):
         # get column to drop piece
-        mouseX = event.pos[0]
-        move = int(math.floor(mouseX / self.size))
-        # loops down column until it finds a place with a piece
-        for j in range(self.rows-1):
-            if self.board[j][move] != 0:
-                self.board[j-1][move] = self.player
-                break
-        # checks for winning move
-        self.setWin()
-        # switch turns
-        if self.player == 1:
-            self.player = 2
-        else:
-            self.player = 1
+        mouseX = event.pos[0] + 40
+        mouseY = event.pos[1]
+        move = int(math.floor(mouseX / self.size))-1
+        if self.getMoves()[move] and 30 < mouseY < 490: # checks if its at the top, and if inside bpard
+            # loops up until it find empty space
+            for r in range(self.rows-1, -1, -1): # start, stop, step_size
+                if self.board[r][move] == 0:
+                    self.board[r][move] = self.player
+                    # checks for winning move
+                    self.setWin()
+                    # switch turns
+                    if self.player == 1:
+                        self.player = 2
+                    else:
+                        self.player = 1
+                    break
 
     def setWin(self):
         if self.checkWin():
             if self.player == 1:
                 self.winner = 1
+                self.p1Score += 1
             else:
                 self.winner = 2
+                self.p2Score += 1
 
+    # self.rows = 6, self.cols = 7
     def checkWin(self):
-        # check horizontal spaces
-        for r in range(self.rows):
-            for c in range(self.cols - 3):
+        # check vertical spaces
+        for r in range(self.rows-3):
+            for c in range(self.cols):
                 if self.board[r][c] == self.player and self.board[r + 1][c] == self.player and self.board[r + 2][c] == self.player and self.board[r + 3][c] == self.player:
                     return True
 
-        # check vertical spaces
-        for c in range(self.cols):
-            for r in range(self.rows - 3):
+        # check horizontal spaces
+        for r in range(self.rows):
+            for c in range(self.cols-3):
                 if self.board[r][c] == self.player and self.board[r][c + 1] == self.player and self.board[r][c + 2] == self.player and self.board[r][c + 3] == self.player:
                     return True
 
         # check left diagonal spaces
-        for c in range(self.cols-3):
-            for r in range(3, self.rows):
-                if self.board[r][c] == self.player and self.board[r + 1][c - 1] == self.player and self.board[r + 2][c - 2] == self.player and self.board[r + 3][c - 3] == self.player:
+        for r in range(3, self.rows):
+            for c in range(self.cols-3):
+                if self.board[r][c] == self.player and self.board[r - 1][c + 1] == self.player and self.board[r - 2][c + 2] == self.player and self.board[r - 3][c + 3] == self.player:
                     return True
 
         # check right diagonal spaces
-        for c in range(self.cols-3):
-            for r in range(self.rows-3):
+        for r in range(self.rows-3):
+            for c in range(self.cols-3):
                 if self.board[r][c] == self.player and self.board[r + 1][c + 1] == self.player and self.board[r + 2][c + 2] == self.player and self.board[r + 3][c + 3] == self.player:
                     return True
         return False
-
-
 

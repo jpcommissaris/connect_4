@@ -1,19 +1,15 @@
 import pygame
 from board import Board
-import sys
-import random
-import math
+import numpy as np
 
-BLACK = (0,0,0)
-BLUE = (0,0,255)
-RED = (255, 0, 0)
-YELLOW = (255, 255, 0)
+LIGHT_BLUE = (155,205,250)
+WHITE = (255,255,255)
 
 pygame.init()
 
 # Set up the screen [width, height]
-length = 600
-width = 600
+length = 606
+width = 570
 size = (length, width)
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("Four in a Row")
@@ -22,9 +18,6 @@ pygame.display.set_caption("Four in a Row")
 done = False
 # Used to manage how fast the screen updates
 clock = pygame.time.Clock()
-
-
-
 
 b = Board()
 
@@ -36,19 +29,23 @@ while not done:
         if event.type == pygame.QUIT:
             done = True
         if event.type == pygame.MOUSEBUTTONUP:
+            m = pygame.mouse.get_pos()
+            #resets
+            if (250 < m[0] < 356) and (520 < m[1] < 550):
+                b.winner = 0
+                b.board = np.zeros((b.rows, b.cols))
+                b.player = 1
             # does move and checks for a winner
-            b.doMove(event)
-        if event.type == pygame.MOUSEMOTION:
-            b.highlight(screen, event)
-    # --- scene logic ---
-
+            if b.winner == 0:
+                b.doMove(event)
 
     # --- repaints screen ---
-    screen.fill((255,255,255))
+    screen.fill(LIGHT_BLUE)
 
     # --- new drawings ---
     b.drawBoard(screen)
-
+    b.drawTexts(screen)
+    b.newGameButton(screen)
     # Updates screen with new drawings
     pygame.display.flip()
 
