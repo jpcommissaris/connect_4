@@ -3,12 +3,13 @@ import numpy as np
 import random
 import math
 
-rand = random.Random()
+
 BLACK = (0,0,0)
 BLUE = (20,40,250)
 RED = (255, 0, 0)
 YELLOW = (250, 248, 57)
 WHITE = (255,255,255)
+
 
 class Board():
 
@@ -74,6 +75,19 @@ class Board():
             if self.board[0][m] == 0:
                 moves[m] = True
         return moves
+    def getNumMoves(self):
+        moves = []
+        for m in range(7):
+            if self.getMoves()[m]:
+                moves.append(m)
+        return moves
+
+
+    def isBoardFull(self):
+        if self.getMoves() == [False, False, False, False, False, False, False]:
+            return True
+        else:
+            return False
 
     def doMove(self, event):
         # get column to drop piece
@@ -93,6 +107,14 @@ class Board():
                     else:
                         self.player = 1
                     break
+
+    def doTreeMove(self, col):
+        if self.getMoves()[col]:
+            for r in range(self.rows-1, -1, -1): # start, stop, step_size
+                if self.board[r][col] == 0:
+                    self.board[r][col] = self.player
+                    return True
+        return False
 
     def setWin(self):
         if self.checkWin():
@@ -129,4 +151,104 @@ class Board():
                 if self.board[r][c] == self.player and self.board[r + 1][c + 1] == self.player and self.board[r + 2][c + 2] == self.player and self.board[r + 3][c + 3] == self.player:
                     return True
         return False
+
+# --- different types of bots ---
+    def doRandomMove(self):
+        move = random.randint(0, 6)
+        if self.getMoves()[move]:
+            for r in range(self.rows - 1, -1, -1):  # start, stop, step_size
+                if self.board[r][move] == 0:
+                    self.board[r][move] = self.player
+                    # checks for winning move
+                    self.setWin()
+                    self.player = 1
+                    break
+        else:
+            for x in range(6):
+                if self.getMoves()[x]:
+                    for r in range(self.rows - 1, -1, -1):  # start, stop, step_size
+                        if self.board[r][x] == 0:
+                            self.board[r][x] = self.player
+                            # checks for winning move
+                            self.setWin()
+                            self.player = 1
+                            break
+                    break
+
+    def doBotMove(self):
+        pass
+
+
+# checks score of the board, must use on a new board where a possible move is player
+
+    def checkScore(self, p, c): # p is player, c is column of move
+        score = 0
+        # center
+        if c == 3:
+            score += 3
+        # mid3
+        if c == 2 or c == 3 or c == 4:
+            score += 2
+        # vertical
+        for cols in range(self.cols):
+            slice = []
+            for x in list(self.board[:, cols]): # list of one row all columns
+                slice.append(x)
+            for rows in range(self.rows - 3): # checks all squares for moves
+                square = slice[rows:rows + 4]
+                score += self.checkSquare(square, p)
+        # horizontal
+        for rows in range(self.rows):
+            slice = []
+            for x in list(self.board[rows, :]):  # list of one row all columns
+                slice.append(x)
+            for cols in range(self.cols - 3):  # checks all squares for moves
+                square = slice[cols:cols + 4]
+                score += self.checkSquare(square, p)
+        # forward slash '/'
+        for rows in range(self.rows - 3):
+            for cols in range(self.cols - 3):
+                square = []
+                for x in range(4):
+                    square.append(self.board[rows+x][cols+x]) # 1 up and 1 right
+                score += self.checkSquare(square, p)
+        # backward slash '\'
+        for rows in range(3, self.rows):
+            for cols in range(self.cols - 3):
+                square = []
+                for x in range(4):
+                    square.append(self.board[rows - x][cols + x])  # 1 down and 1 right
+                score += self.checkSquare(square, p)
+        # returns score of board
+        print(score)
+        return score
+
+
+
+    def checkSquare(self, sq, p):
+        score = 0
+        # determine whose who
+        if p == 1:
+            me = 1
+            them = 2
+        else:
+            me = 2
+            them = 1
+        # defense
+        if sq.count(them) == 4:
+            score -= 100
+        elif sq.count(them) == 3 and sq.count(0) == 1:
+            score -= 5
+        elif sq.count(them) == 2 and sq.count(0) == 2:
+            score -= 2
+        # offense
+        if sq.count(me) == 4:
+            score += 1000
+        elif sq.count(me) == 3 and sq.count(0) == 1:
+            score += 7
+        elif sq.count(me) == 2 and sq.count(0) == 2:
+            score += 3
+        return score
+
+
 
