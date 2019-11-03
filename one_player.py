@@ -1,6 +1,7 @@
 import pygame
 from board import Board
 import numpy as np
+from AI_minimax import Minimax
 
 LIGHT_BLUE = (155,205,250)
 WHITE = (255,255,255)
@@ -40,8 +41,9 @@ while not done:
             if b.winner == 0:
                 if b.player == 1:
                     b.doMove(event)
-                if b.player == 2:
-                    b.doRandomMove()
+                if b.player == 2 and b.winner != 1:
+                    m = Minimax(b, 3)
+                    b.doMinimaxMove(m.getMove())
 
 
     # --- repaints screen ---

@@ -4,6 +4,7 @@ import random
 import math
 
 
+
 BLACK = (0,0,0)
 BLUE = (20,40,250)
 RED = (255, 0, 0)
@@ -26,8 +27,6 @@ class Board():
         # graphics
         self.size = 75
         self.radius = (int)(self.size * .38)
-
-
 
     # --- graphics ---
     def drawBoard(self, win):
@@ -81,6 +80,11 @@ class Board():
             if self.getMoves()[m]:
                 moves.append(m)
         return moves
+    def isMoveLegal(self, col):
+        if self.board[0][col] == 0:
+            return True
+        else:
+            return False
 
 
     def isBoardFull(self):
@@ -108,11 +112,11 @@ class Board():
                         self.player = 1
                     break
 
-    def doTreeMove(self, col):
+    def doTreeMove(self, col, player):
         if self.getMoves()[col]:
             for r in range(self.rows-1, -1, -1): # start, stop, step_size
                 if self.board[r][col] == 0:
-                    self.board[r][col] = self.player
+                    self.board[r][col] = player
                     return True
         return False
 
@@ -175,20 +179,34 @@ class Board():
                             break
                     break
 
-    def doBotMove(self):
-        pass
+    def doMinimaxMove(self, move):
+        for r in range(self.rows - 1, -1, -1):  # start, stop, step_size
+            if self.board[r][move] == 0:
+                self.board[r][move] = self.player
+                # checks for winning move
+                self.setWin()
+                self.player = 1
+                break
+
+    def doBotMove(self, col, p):
+        for r in range(self.rows - 1, -1, -1):  # start, stop, step_size
+            if self.board[r][col] == 0:
+                self.board[r][col] = p
+                break
 
 
 # checks score of the board, must use on a new board where a possible move is player
 
-    def checkScore(self, p, c): # p is player, c is column of move
+    def checkScore(self): # p is player, c is column of move
         score = 0
         # center
-        if c == 3:
-            score += 3
-        # mid3
-        if c == 2 or c == 3 or c == 4:
-            score += 2
+        for r in range(self.rows):
+            if self.board[r][3] == 2:
+                score += 2
+            if self.board[r][2] == 2:
+                score += 1
+            if self.board[r][4] == 2:
+                score += 1
         # vertical
         for cols in range(self.cols):
             slice = []
@@ -196,7 +214,7 @@ class Board():
                 slice.append(x)
             for rows in range(self.rows - 3): # checks all squares for moves
                 square = slice[rows:rows + 4]
-                score += self.checkSquare(square, p)
+                score += self.checkSquare(square)
         # horizontal
         for rows in range(self.rows):
             slice = []
@@ -204,50 +222,46 @@ class Board():
                 slice.append(x)
             for cols in range(self.cols - 3):  # checks all squares for moves
                 square = slice[cols:cols + 4]
-                score += self.checkSquare(square, p)
+                score += self.checkSquare(square)
         # forward slash '/'
         for rows in range(self.rows - 3):
             for cols in range(self.cols - 3):
                 square = []
                 for x in range(4):
                     square.append(self.board[rows+x][cols+x]) # 1 up and 1 right
-                score += self.checkSquare(square, p)
+                score += self.checkSquare(square)
         # backward slash '\'
         for rows in range(3, self.rows):
             for cols in range(self.cols - 3):
                 square = []
                 for x in range(4):
                     square.append(self.board[rows - x][cols + x])  # 1 down and 1 right
-                score += self.checkSquare(square, p)
+                score += self.checkSquare(square)
         # returns score of board
         print(score)
         return score
 
 
 
-    def checkSquare(self, sq, p):
+    def checkSquare(self, sq):
         score = 0
         # determine whose who
-        if p == 1:
-            me = 1
-            them = 2
-        else:
-            me = 2
-            them = 1
+        me = 2
+        them = 1
         # defense
         if sq.count(them) == 4:
             score -= 100
         elif sq.count(them) == 3 and sq.count(0) == 1:
-            score -= 5
+            score -= 10
         elif sq.count(them) == 2 and sq.count(0) == 2:
-            score -= 2
+            score -= 3
         # offense
         if sq.count(me) == 4:
             score += 1000
         elif sq.count(me) == 3 and sq.count(0) == 1:
             score += 7
         elif sq.count(me) == 2 and sq.count(0) == 2:
-            score += 3
+            score += 1
         return score
 
 

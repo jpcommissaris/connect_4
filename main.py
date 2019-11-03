@@ -10,8 +10,7 @@ pygame.init()
 # Set up the screen [width, height]
 length = 606
 width = 570
-size = (length, width)
-screen = pygame.display.set_mode(size)
+screen = pygame.display.set_mode((length, width))
 pygame.display.set_caption("Four in a Row")
 
 # Loop until the user clicks the close button.
@@ -30,12 +29,12 @@ while not done:
             done = True
         if event.type == pygame.MOUSEBUTTONUP:
             m = pygame.mouse.get_pos()
-            #resets
+            # -- if true the board is reset --
             if (250 < m[0] < 356) and (520 < m[1] < 550):
                 b.winner = 0
                 b.board = np.zeros((b.rows, b.cols))
                 b.player = 1
-            # does move and checks for a winner
+            # -- does move and checks for a winner --
             if b.winner == 0:
                 b.doMove(event)
 
